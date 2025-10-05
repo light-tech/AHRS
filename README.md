@@ -16,6 +16,8 @@ The IMU combinations should not matter (ADXL335, MPU6050, MPU9250, BNO160, LSM6D
  * rotational velocities in 3 axes in unit of radians per second,
  * magnetic field strength in 3 axes in unit of Gauss.
 
+I am using the combination of a LSM6DS3 for accelerometer + gyroscope and a QMC5883 for magnetometer. Note that it is important to match the axes of the IMUs. For MCU, my choice is an ESP8266 in case I want to transmit sensor data over WiFi in the future.
+
 ## Calibration
 
 ## Quaternion
