@@ -11,6 +11,9 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
 
+  myIMU.settings.gyroRange = 245; // max deg/sec
+  myIMU.settings.accelRange = 2;  // max g
+
   //Call .begin() to configure the IMU
   while (myIMU.begin() != IMU_SUCCESS) {
     Serial.println("Failed to initialize LSM6DS3!");
