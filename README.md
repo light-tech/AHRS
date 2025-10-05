@@ -6,7 +6,7 @@ In this project I am implementing the wellknown algorithms in this topic and app
 
 ## Hardware
 
-These days, some IMUs such as BNO055 implement many algorithms in the hardware.
+These days, some IMUs such as BNO055 and the popular [MPU6050](https://mjwhite8119.github.io/Robots/mpu6050) implement many algorithms in the hardware. Using them are of course preferable for demanding applications.
 
 We want to use more basic IMUs which only supply raw accelerations, angular velocities, etc. and then process them in software running on the computer so if desire, one should be able to port them to run on the microcontroller.
 
