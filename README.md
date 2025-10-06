@@ -28,6 +28,6 @@ I am using the combination of a LSM6DS3 for accelerometer + gyroscope and a QMC5
 
  * Short introduction video https://www.youtube.com/watch?v=eqZgxR6eRjo
 
- * This course on 9-axis IMU https://www.youtube.com/watch?v=2AO_Gmh5K3Q&list=PLGs0VKk2DiYwEo-k0mjIkWXlkrJWAU4L9
+ * This course on 9-axis IMU https://www.youtube.com/watch?v=2AO_Gmh5K3Q&list=PLGs0VKk2DiYwEo-k0mjIkWXlkrJWAU4L9 and https://toptechboy.com/arduino-based-9-axis-inertial-measurement-unit-imu-based-on-bno055-sensor/
 
  * MATLAB course on sensor fusion https://www.youtube.com/watch?v=6qV3YjFppuc&list=PLn8PRpmsu08ryYoBpEKzoMOveSTyS-h4a and Kalman filter https://www.youtube.com/watch?v=mwn8xhgNpFY&list=PLn8PRpmsu08pzi6EMiYnR-076Mh-q3tWr
