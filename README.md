@@ -18,6 +18,8 @@ The IMU combinations should not matter (ADXL335, MPU6050, MPU9250, BNO160, LSM6D
 
 I am using the combination of a LSM6DS3 for accelerometer + gyroscope and a QMC5883 for magnetometer. Note that it is important to match the axes of the IMUs. For MCU, my choice is an ESP8266 in case I want to transmit sensor data over WiFi in the future.
 
+The firmware is super simple: Read the sensors and dump 10 numbers (the timestamp followed by 9 numbers) over the serial port. Since printing out floating points is hard, we will use raw sensor values (integers) and convert them in the software.
+
 ## Calibration
 
 ## Quaternion
