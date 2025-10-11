@@ -1,5 +1,6 @@
 # Driver library to read IMU data over serial port
 
+import math
 import serial
 from time import *
 
@@ -14,6 +15,31 @@ class IMUData:
 
     def __str__(self):
         return "t=" + str(self.timeStampMs) + " a=" + str(self.accel) + " g=" + str(self.gyro) + " m=" + str(self.mag)
+
+toDeg = 180.0 / math.pi
+
+class StateEstimator:
+    """
+    State estimators are object that continuously consumes IMU data and produces estimates of the object
+    orientation (roll, pitch, yaw or quaternion) in 3D space. The output could be fed into the visualizer.
+    """
+    def __init__(self):
+        self.theta = 0  # Roll
+        self.phi = 0    # Pitch
+        self.psi = 0    # Yaw
+    
+    def Update(self, imuData):
+        """
+        Consume the IMU data to update the state estimate
+        """
+        ax,ay,az = imuData.accel
+        mx,my,_ = imuData.mag
+        self.theta = math.atan2(ax, az)   # Dumb estimate by relying only on accelerometer
+        self.phi = math.atan2(ay, az)
+        self.psi = math.atan2(my, mx)     # and magnetometer
+
+    def __str__(self):
+        return f"{self.theta*toDeg:.2f} {self.phi*toDeg:.2f} {self.psi*toDeg:.2f}"
 
 def Initialize():
     global ad
@@ -41,8 +67,10 @@ def ReadRaw():
 
 def main():
     Initialize()
+    est = StateEstimator()
     while (True):
         v = ReadRaw()
-        print(v)
+        est.Update(v)
+        print(est)
 
 main()
