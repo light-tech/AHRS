@@ -27,8 +27,8 @@ class StateEstimator:
     """
     def __init__(self):
         self.timeStampMs = None
-        self.theta = 0  # Roll
-        self.phi = 0    # Pitch
+        self.theta = 0  # Pitch
+        self.phi = 0    # Roll
         self.psi = 0    # Yaw
     
     def Update(self, imuData):
@@ -54,6 +54,21 @@ class StateEstimator:
         Xm = mx * math.cos(self.theta) - my * math.sin(self.phi) * math.sin(self.theta) + mz * math.cos(self.phi) * math.sin(self.theta)
         Ym = my * math.cos(self.phi) + mz * math.sin(self.phi)
         self.psi = math.atan2(Ym, Xm)
+    
+    def Roll(self):
+        return self.phi
+    
+    def Pitch(self):
+        return self.theta
+
+    def Yaw(self):
+        return self.psi
+    
+    def EulerAngles(self):
+        return (self.phi, self.theta, self.psi)
+
+    def Quaternion(self):
+        raise NotImplementedError("Quaternion is not yet implemented.")
 
     def __str__(self):
         return f"{self.theta*toDeg:.2f} {self.phi*toDeg:.2f} {self.psi*toDeg:.2f}"
