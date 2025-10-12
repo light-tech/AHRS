@@ -27,9 +27,9 @@ while (True):
     v = imu.ReadRaw()
     if v != None:
         est.Update(v)
-    # print(est)
-    roll = est.theta
-    pitch = est.phi
+    print(est)
+    roll = est.phi
+    pitch = est.theta
     yaw = est.phi
     rate(50)
     k=vector(cos(yaw)*cos(pitch), sin(pitch),sin(yaw)*cos(pitch))

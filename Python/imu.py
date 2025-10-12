@@ -37,15 +37,23 @@ class StateEstimator:
         """
         ax,ay,az = imuData.accel
         gx,gy,_ = imuData.gyro
-        mx,my,_ = imuData.mag
+        mx,my,mz = imuData.mag
+
         if (self.timeStampMs == None):
             dt = 0
         else:
             dt = (imuData.timeStampMs - self.timeStampMs) / 1000.0
+
         self.timeStampMs = imuData.timeStampMs
-        self.theta = (self.theta + dt * gy * gyroRawToRps) * 0.95 + math.atan2(ax, az) * 0.05 # Complimentary filter
-        self.phi = (self.theta + dt * gx * gyroRawToRps) * 0.95 + math.atan2(ay, az) * 0.05
-        self.psi = math.atan2(my, mx)     # and magnetometer
+
+        # Complimentary filter
+        self.theta = (self.theta + dt * gy * gyroRawToRps) * 0.95 + math.atan2(ax, az) * 0.05
+        self.phi = (self.phi + dt * gx * gyroRawToRps) * 0.95 + math.atan2(ay, az) * 0.05
+
+        # Estimate yaw using magnetometer, formula from Arduino code
+        Xm = mx * math.cos(self.theta) - my * math.sin(self.phi) * math.sin(self.theta) + mz * math.cos(self.phi) * math.sin(self.theta)
+        Ym = my * math.cos(self.phi) + mz * math.sin(self.phi)
+        self.psi = math.atan2(Ym, Xm)
 
     def __str__(self):
         return f"{self.theta*toDeg:.2f} {self.phi*toDeg:.2f} {self.psi*toDeg:.2f}"
