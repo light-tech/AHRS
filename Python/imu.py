@@ -77,7 +77,7 @@ def ReadRaw():
     else:
         return None
 
-def main():
+def _main():
     Initialize()
     est = StateEstimator()
     while (True):
@@ -86,4 +86,5 @@ def main():
             est.Update(v)
             print(est)
 
-main()
+if __name__ == "__main__":
+    _main()

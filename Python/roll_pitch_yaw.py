@@ -1,15 +1,8 @@
 from vpython import *
 from time import *
-import numpy as np
-import math
-import serial
-ad=serial.Serial('com5',115200)
-sleep(1)
-
+import imu
 
 scene.range=5
-toRad=2*np.pi/360
-toDeg=1/toRad
 scene.forward=vector(-1,-1,-1)
 
 scene.width=600
@@ -27,16 +20,17 @@ bBoard=box(length=6,width=2,height=.2,opacity=.8,pos=vector(0,0,0,))
 bn=box(length=1,width=.75,height=.1, pos=vector(-.5,.1+.05,0),color=color.blue)
 nano=box(lenght=1.75,width=.6,height=.1,pos=vector(-2,.1+.05,0),color=color.green)
 myObj=compound([bBoard,bn,nano])
+
+imu.Initialize()
+est = imu.StateEstimator()
 while (True):
-    while (ad.inWaiting()==0):
-        pass
-    dataPacket=ad.readline()
-    dataPacket=str(dataPacket,'utf-8')
-    splitPacket=dataPacket.split(",")
-    roll=float(splitPacket[0])*toRad
-    pitch=float(splitPacket[1])*toRad
-    yaw=float(splitPacket[2])*toRad+np.pi
-    print("Roll=",roll*toDeg," Pitch=",pitch*toDeg,"Yaw=",yaw*toDeg)
+    v = imu.ReadRaw()
+    if v != None:
+        est.Update(v)
+    # print(est)
+    roll = est.theta
+    pitch = est.phi
+    yaw = est.phi
     rate(50)
     k=vector(cos(yaw)*cos(pitch), sin(pitch),sin(yaw)*cos(pitch))
     y=vector(0,1,0)
