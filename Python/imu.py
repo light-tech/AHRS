@@ -62,24 +62,28 @@ def ReadRaw():
     dataPacket=ad.readline()
     dataPacket=str(dataPacket,'utf-8')
     splitPacket=dataPacket.split(" ")
-    ts=int(splitPacket[0])
-    ax=int(splitPacket[1])
-    ay=int(splitPacket[2])
-    az=int(splitPacket[3])
-    gx=int(splitPacket[4])
-    gy=int(splitPacket[5])
-    gz=int(splitPacket[6])
-    mx=int(splitPacket[7])
-    my=int(splitPacket[8])
-    mz=int(splitPacket[9])
-    return IMUData(ts, ax, ay, az, gx, gy, gz, mx, my, mz)
+    if len(splitPacket) == 10:
+        ts=int(splitPacket[0])
+        ax=int(splitPacket[1])
+        ay=int(splitPacket[2])
+        az=int(splitPacket[3])
+        gx=int(splitPacket[4])
+        gy=int(splitPacket[5])
+        gz=int(splitPacket[6])
+        mx=int(splitPacket[7])
+        my=int(splitPacket[8])
+        mz=int(splitPacket[9])
+        return IMUData(ts, ax, ay, az, gx, gy, gz, mx, my, mz)
+    else:
+        return None
 
 def main():
     Initialize()
     est = StateEstimator()
     while (True):
         v = ReadRaw()
-        est.Update(v)
-        print(est)
+        if v != None:
+            est.Update(v)
+            print(est)
 
 main()
