@@ -116,6 +116,96 @@ class StateEstimator:
     def __str__(self):
         return f"{self.theta*toDeg:.2f} {self.phi*toDeg:.2f} {self.psi*toDeg:.2f}"
 
+class MadgwickIMUStateEstimator:
+    def __init__(self, calib):
+        self.timeStampMs = None
+        self.SEq = (1.0, 0.0, 0.0, 0.0)
+        # Make these configurable in constructor
+        self.gyroMeasError = 5.0 * toRad
+        self.beta = math.sqrt(3.0 / 4.0) * self.gyroMeasError
+        self.calib = calib
+    
+    def Update(self, imuData):
+        """
+        Consume the IMU data to update the state estimate
+        """
+        a_x,a_y,a_z = imuData.accel
+        w_x,w_y,w_z = self.calib.AdjustGyro(imuData.gyro)
+        w_x = w_x * gyroRawToRps
+        w_y = w_y * gyroRawToRps
+        w_z = w_z * gyroRawToRps
+        SEq_1,SEq_2,SEq_3,SEq_4 = self.SEq
+
+        if (self.timeStampMs == None):
+            deltat = 0
+        else:
+            deltat = (imuData.timeStampMs - self.timeStampMs) / 1000.0
+        self.timeStampMs = imuData.timeStampMs
+
+        halfSEq_1 = 0.5 * SEq_1
+        halfSEq_2 = 0.5 * SEq_2
+        halfSEq_3 = 0.5 * SEq_3
+        halfSEq_4 = 0.5 * SEq_4
+        twoSEq_1 = 2.0 * SEq_1
+        twoSEq_2 = 2.0 * SEq_2
+        twoSEq_3 = 2.0 * SEq_3
+
+        norm = math.sqrt(a_x * a_x + a_y * a_y + a_z * a_z)
+        a_x /= norm
+        a_y /= norm
+        a_z /= norm
+
+        f_1 = twoSEq_2 * SEq_4- twoSEq_1 * SEq_3- a_x
+        f_2 = twoSEq_1 * SEq_2 + twoSEq_3 * SEq_4- a_y
+        f_3 = 1.0- twoSEq_2 * SEq_2- twoSEq_3 * SEq_3- a_z
+        J_11or24 = twoSEq_3
+        J_12or23 = 2.0 * SEq_4
+        J_13or22 = twoSEq_1
+        J_14or21 = twoSEq_2
+        J_32 = 2.0 * J_14or21
+        J_33 = 2.0 * J_11or24
+
+        SEqHatDot_1 = J_14or21 * f_2- J_11or24 * f_1
+        SEqHatDot_2 = J_12or23 * f_1 + J_13or22 * f_2- J_32 * f_3
+        SEqHatDot_3 = J_12or23 * f_2- J_33 * f_3- J_13or22 * f_1
+        SEqHatDot_4 = J_14or21 * f_1 + J_11or24 * f_2
+
+        norm = math.sqrt(SEqHatDot_1 * SEqHatDot_1 + SEqHatDot_2 * SEqHatDot_2 + SEqHatDot_3 * SEqHatDot_3 + SEqHatDot_4 * SEqHatDot_4)
+        SEqHatDot_1 /= norm
+        SEqHatDot_2 /= norm
+        SEqHatDot_3 /= norm
+        SEqHatDot_4 /= norm
+
+        SEqDot_omega_1 =-halfSEq_2 * w_x- halfSEq_3 * w_y- halfSEq_4 * w_z
+        SEqDot_omega_2 = halfSEq_1 * w_x + halfSEq_3 * w_z- halfSEq_4 * w_y
+        SEqDot_omega_3 = halfSEq_1 * w_y- halfSEq_2 * w_z + halfSEq_4 * w_x
+        SEqDot_omega_4 = halfSEq_1 * w_z + halfSEq_2 * w_y- halfSEq_3 * w_x
+
+        SEq_1 += (SEqDot_omega_1- (self.beta * SEqHatDot_1)) * deltat
+        SEq_2 += (SEqDot_omega_2- (self.beta * SEqHatDot_2)) * deltat
+        SEq_3 += (SEqDot_omega_3- (self.beta * SEqHatDot_3)) * deltat
+        SEq_4 += (SEqDot_omega_4- (self.beta * SEqHatDot_4)) * deltat
+
+        norm = math.sqrt(SEq_1 * SEq_1 + SEq_2 * SEq_2 + SEq_3 * SEq_3 + SEq_4 * SEq_4)
+        SEq_1 /= norm
+        SEq_2 /= norm
+        SEq_3 /= norm
+        SEq_4 /= norm
+        self.SEq = (SEq_1, SEq_2, SEq_3, SEq_4)
+    
+    def EulerAngles(self):
+        q0,q1,q2,q3 = self.SEq
+        roll = math.atan2(2*(q0*q1+q2*q3),1-2*(q1*q1+q2*q2))
+        pitch = math.asin(2*(q0*q2-q3*q1))
+        yaw = math.atan2(2*(q0*q3+q1*q2),1-2*(q2*q2+q3*q3))
+        return (roll, pitch, yaw)
+    
+    def Quaternion(self):
+        return self.SEq
+
+    def __str__(self):
+        return str(self.SEq)
+
 def Initialize():
     global ad
     global calib
