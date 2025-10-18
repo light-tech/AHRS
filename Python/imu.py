@@ -5,10 +5,12 @@ import serial
 from time import *
 
 ad = None
+calib = None
 toDeg = 180.0 / math.pi
 toRad = math.pi / 180.0
 gyroRawToDps = 4.375 * 2 / 1000.0  # For LSM6D3S configured to use gyro range 245 dps
 gyroRawToRps = 4.375 * 2 / 1000.0 * toRad
+storedGyroOffsets = (382.714, -287.454, -414.814)
 
 class IMUData:
     def __init__(self, ts, ax, ay, az, gx, gy, gz, mx, my, mz):
@@ -20,23 +22,64 @@ class IMUData:
     def __str__(self):
         return "t=" + str(self.timeStampMs) + " a=" + str(self.accel) + " g=" + str(self.gyro) + " m=" + str(self.mag)
 
+class IMUCalibrator:
+    def __init__(self):
+        self.gx_offset = 0
+        self.gy_offset = 0
+        self.gz_offset = 0
+    
+    def __init__(self, gyroOffsets):
+        gx,gy,gz = gyroOffsets
+        self.gx_offset = gx
+        self.gy_offset = gy
+        self.gz_offset = gz
+    
+    def StartGyroCalib(self):
+        input("Get ready to hold still for a few seconds and press Enter to continue...")
+        num_samples = 0
+        samples_needed = 500
+        sx = 0
+        sy = 0
+        sz = 0
+        while (num_samples < samples_needed):
+            v = ReadRaw()
+            if (v != None):
+                print("Received the ", num_samples, " data point")
+                gx,gy,gz = v.gyro
+                sx += gx
+                sy += gy
+                sz += gz
+                num_samples += 1
+        self.gx_offset = sx / samples_needed
+        self.gy_offset = sy / samples_needed
+        self.gz_offset = sz / samples_needed
+        print("Done: ", self)
+
+    def AdjustGyro(self, g):
+        gx,gy,gz = g
+        return (gx - self.gx_offset, gy - self.gy_offset, gz - self.gz_offset)
+    
+    def __str__(self):
+        return f"{self.gx_offset} {self.gy_offset} {self.gz_offset}"
+
 class StateEstimator:
     """
     State estimators are object that continuously consumes IMU data and produces estimates of the object
     orientation (roll, pitch, yaw or quaternion) in 3D space. The output could be fed into the visualizer.
     """
-    def __init__(self):
+    def __init__(self, calib):
         self.timeStampMs = None
         self.theta = 0  # Pitch
         self.phi = 0    # Roll
         self.psi = 0    # Yaw
+        self.calib = calib
     
     def Update(self, imuData):
         """
         Consume the IMU data to update the state estimate
         """
         ax,ay,az = imuData.accel
-        gx,gy,_ = imuData.gyro
+        gx,gy,_ = self.calib.AdjustGyro(imuData.gyro)
         mx,my,mz = imuData.mag
 
         if (self.timeStampMs == None):
@@ -75,8 +118,17 @@ class StateEstimator:
 
 def Initialize():
     global ad
+    global calib
     ad=serial.Serial('COM4',115200)
     sleep(1)
+    if (storedGyroOffsets == None):
+        calib = IMUCalibrator()
+        calib.StartGyroCalib()
+    else:
+        calib = IMUCalibrator(storedGyroOffsets)
+
+def GetCalibrator():
+    return calib
 
 def ReadRaw():
     while (ad.inWaiting()==0):
@@ -102,7 +154,7 @@ def ReadRaw():
 
 def _main():
     Initialize()
-    est = StateEstimator()
+    est = StateEstimator(calib)
     while (True):
         v = ReadRaw()
         if v != None:

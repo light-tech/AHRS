@@ -22,7 +22,7 @@ nano=box(lenght=1.75,width=.6,height=.1,pos=vector(-2,.1+.05,0),color=color.gree
 myObj=compound([bBoard,bn,nano])
 
 imu.Initialize()
-est = imu.StateEstimator()
+est = imu.StateEstimator(imu.GetCalibrator())
 while (True):
     v = imu.ReadRaw()
     if v != None:

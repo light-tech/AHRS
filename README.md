@@ -4,6 +4,13 @@
 
 In this project I am implementing the wellknown algorithms in this topic and applications to visualize the orientation.
 
+```mermaid
+graph LR;
+    IMU --> Calibration;
+    Calibration --> StateEstimator;
+    StateEstimator --> Visualizer;
+```
+
 ## Hardware
 
 These days, some IMUs such as BNO055 and the popular [MPU6050](https://mjwhite8119.github.io/Robots/mpu6050) implement many algorithms in the hardware. Using them are of course preferable for demanding applications.
@@ -21,6 +28,12 @@ I am using the combination of a LSM6DS3 for accelerometer + gyroscope and a QMC5
 The firmware is super simple: Read the sensors and dump 10 numbers (the timestamp followed by 9 numbers) over the serial port. Since printing out floating points is hard, we will use raw sensor values (integers) and convert them in the software.
 
 ## Calibration
+
+Most sensors generate erroneous data due to manufacturing imperfection so they need to be calibrated. The **process** and **algorithm** varyfrom sensor to sensor.
+
+For gyroscope, it is fairly simple. Let the device sit still (where we expect the rotational velocities to be all zero) to measure $N$ samples. Then take the average and subtract future measurements by that average. (We are doing an optimization problem here: if $X_1, ..., X_N$ are $N$ real numbers then the optimal $X$ that minimize the sum of squares $$(X_1 - X)^2 + ... + (X_N - X)^2$$ is the average.)
+
+Accelerometer and magnetometer are much more involved (see https://forum.arduino.cc/t/how-to-calibrate-an-accelerometer/961066 and https://toptechboy.com/calibrating-a-3-axis-magnetometer/ .)
 
 ## Quaternion
 
